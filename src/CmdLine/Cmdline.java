@@ -4,8 +4,8 @@ import java.util.HashMap;
 
 public class Cmdline {
 
-    public String name;
-    public int threadNum;
+    private String name;
+    private int threadNum;
     public int volumeSize;
     public boolean sfx;
     public boolean shared;
@@ -35,11 +35,21 @@ public class Cmdline {
         return map.get(threadNum);
     }
 
+/*
     int getDictionarySize(Level level) {
         HashMap<Level, Integer> map = new HashMap<>();
         map.put(Level.fast, 1);
         map.put(Level.normal, 16);
         map.put(Level.maximum, 32);
+        return map.get(level);
+    }
+*/
+
+    int getDictionarySize(String level) {
+        HashMap<String, Integer> map = new HashMap<>();
+        map.put(Level.fast.name(), 1);
+        map.put(Level.normal.name(), 16);
+        map.put(Level.maximum.name(), 32);
         return map.get(level);
     }
 

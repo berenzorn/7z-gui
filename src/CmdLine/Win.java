@@ -33,7 +33,7 @@ public class Win {
     private final Cmdline cmdline = new Cmdline();
     private StringBuilder z7name = new StringBuilder();
 
-    public Win() {
+    Win() {
 
         z7name.append(Format.z7.name()).reverse();
         frame.setResizable(false);
@@ -53,34 +53,18 @@ public class Win {
 
         setLevelBox();
         setThreadsBox(true);
-        setMemField(z7name.toString(), Level.normal, Method.LZMA2, cmdline.getThreadNum());
-        setDememField(z7name.toString(), Level.normal);
+//        setMemoryFields(z7name.toString(), Level.normal.name(), Method.LZMA2.name(), cmdline.getThreadNum());
 
         updateModeBox.addItem("Add & replace files");
         pathModeBox.addItem("Relative pathnames");
         encryptBox.addItem("AES-256");
 
         formatBox.addActionListener(actionEvent -> {
-            if (Objects.equals(formatBox.getSelectedItem(), z7name.toString())) {
-                methodBox.setEnabled(true);
-                methodBox.removeAllItems();
-                methodBox.addItem(Method.LZMA2.name());
-                methodBox.addItem(Method.LZMA.name());
-                setLevelBox();
-                setThreadsBox(true);
-                setMemField(z7name.toString(), Level.normal, Method.LZMA2, cmdline.getThreadNum());
-                setDememField(z7name.toString(), Level.normal);
-            }
-            if (Objects.equals(formatBox.getSelectedItem(), Format.zip.name())) {
-                methodBox.setEnabled(true);
-                methodBox.removeAllItems();
-                methodBox.addItem(Method.Deflate.name());
-                methodBox.addItem(Method.LZMA.name());
-                setLevelBox();
-                setThreadsBox(true);
-                setMemField(Format.zip.name(), Level.normal, Method.Deflate, cmdline.getThreadNum());
-                setDememField(Format.zip.name(), Level.normal);
-            }
+            if (Objects.equals(formatBox.getSelectedItem(), z7name.toString())
+                    || (Objects.equals(formatBox.getSelectedItem(), Format.zip.name())))
+                formatBoxInit(Objects.requireNonNull(formatBox.getSelectedItem()).toString(),
+                        Level.normal.name(), cmdline.getThreadNum());
+
             if (Objects.equals(formatBox.getSelectedItem(), Format.tar.name())) {
                 levelBox.removeAllItems();
                 levelBox.setEnabled(false);
@@ -88,12 +72,21 @@ public class Win {
                 methodBox.setEnabled(false);
                 threadsBox.removeAllItems();
                 threadsBox.setEnabled(false);
-                setMemField(Format.tar.name());
-                setDememField(Format.tar.name());
+//                setTarFields();
             }
         });
 
         levelBox.addActionListener(actionEvent -> {
+/*
+            int threads;
+            if (Objects.equals(formatBox.getSelectedItem(), z7name.toString())
+                    && methodBox.getSelectedIndex() == 1)
+                threads = 2;
+            else
+                threads = cmdline.getThreadNum();
+            setMemoryFields(formatBox.getSelectedItem().toString(), levelBox.getSelectedItem().toString(),
+                    methodBox.getSelectedItem().toString(), threads);
+*/
         });
 
         // for 7z:lzma 2 threads, for any other threads = cpu cores
@@ -101,25 +94,21 @@ public class Win {
             if (Objects.equals(formatBox.getSelectedItem(), z7name.toString())
                     && methodBox.getSelectedIndex() == 1) {   // LZMA. don't touch
                 setThreadsBox(false);
-                setMemField(z7name.toString(), Level.normal, Method.LZMA, 2);
-                setDememField(z7name.toString(), Level.normal);
+//                setMemoryFields(z7name.toString(), Level.normal.name(), Method.LZMA.name(), 2);
             }
             else {
                 setThreadsBox(true);
-                if (Objects.equals(formatBox.getSelectedItem(), z7name.toString())) {
-                    setMemField(z7name.toString(), Level.normal, Method.LZMA2, cmdline.getThreadNum());
-                    setDememField(z7name.toString(), Level.normal);
-                }
-                if (Objects.equals(formatBox.getSelectedItem(), Format.zip.name())) {
-                    setMemField(Format.zip.name(), Level.normal, Method.Deflate, cmdline.getThreadNum());
-                    setDememField(Format.zip.name(), Level.normal);
-                }
-                if (Objects.equals(formatBox.getSelectedItem(), Format.tar.name())) {
-                    setMemField(Format.tar.name());
-                    setDememField(Format.tar.name());
-                }
+/*
+                if (Objects.equals(formatBox.getSelectedItem(), z7name.toString()))
+                    setMemoryFields(z7name.toString(), Level.normal.name(), Method.LZMA2.name(), cmdline.getThreadNum());
+                if (Objects.equals(formatBox.getSelectedItem(), Format.zip.name()))
+                    setMemoryFields(Format.zip.name(), Level.normal.name(), Method.Deflate.name(), cmdline.getThreadNum());
+                if (Objects.equals(formatBox.getSelectedItem(), Format.tar.name()))
+                    setTarFields();
+*/
             }
         });
+
 
         chooseButton.addActionListener(actionEvent -> {
             FileDialog fileDialog = new FileDialog(frame, "Choose file", FileDialog.LOAD);
@@ -133,6 +122,8 @@ public class Win {
                 fileTextField.setText("");
         });
 
+
+
         OKButton.addActionListener(actionEvent -> {
 //            String fileName = cmdline.getName();
         });
@@ -143,6 +134,25 @@ public class Win {
         });
     }
 
+    private void formatBoxInit(String format, String level, int threads) {
+        methodBox.setEnabled(true);
+        methodBox.removeAllItems();
+        if (format.equals(z7name.toString())) {
+            methodBox.addItem(Method.LZMA2.name());
+//            setMemoryFields(format, level, Method.LZMA2.name(), threads);
+        }
+        if (format.equals(Format.zip.name())) {
+            methodBox.addItem(Method.Deflate.name());
+//            setMemoryFields(format, level, Method.Deflate.name(), threads);
+        }
+        methodBox.addItem(Method.LZMA.name());
+//        if (methodBox.getItemCount() > 2)
+//            while (methodBox.getItemCount() != 2)
+//                methodBox.remove(2);
+        setLevelBox();
+        setThreadsBox(true);
+    }
+
     private void setLevelBox() {
         levelBox.setEnabled(true);
         levelBox.removeAllItems();
@@ -150,6 +160,9 @@ public class Win {
         levelBox.addItem(Level.normal.name());
         levelBox.addItem(Level.maximum.name());
         levelBox.setSelectedItem(Level.normal.name());
+//        if (levelBox.getItemCount() > 3)
+//            while (levelBox.getItemCount() != 3)
+//                levelBox.remove(3);
     }
 
     // true: threads = cpu cores, false: threads = 2 for lzma
@@ -165,47 +178,36 @@ public class Win {
             threadsBox.addItem("2");
             threadsBox.setSelectedIndex(cmdline.getThreadNumKey(2));
         }
+//        if (threadsBox.getItemCount() > 8)
+//            while (threadsBox.getItemCount() != 8)
+//                threadsBox.remove(8);
     }
 
-    private void setMemField(String format) {
+    private void setMemoryFields(String format, String level, String method, int threads) {
         int memory = 0;
-        if (format.equals(Format.tar.name()))
-            memory = 1;
-        memField.setHorizontalAlignment(4);
-        memField.setText(String.valueOf(memory) + " MB");
-    }
-
-    private void setDememField(String format) {
-        int memory = 0;
-        if (format.equals(Format.tar.name()))
-            memory = 1;
-        dememField.setHorizontalAlignment(4);
-        dememField.setText(String.valueOf(memory) + " MB");
-    }
-
-    private void setMemField(String format, Level level, Method method, int threads) {
-        int memory = 0;
-        if (format.equals(Format.zip.name()))
+        int dememory = 0;
+        if (format.equals(Format.zip.name())) {
             memory = (int) Math.round(33.3 * threads);
-
-        if (format.equals(z7name.toString())) {
-            if (method.equals(Method.LZMA))
+            dememory = 2;
+        }
+        if (format.equals(Format.z7.name())) {
+            if (method.equals(Method.LZMA.name()))
                 memory = 12 * cmdline.getDictionarySize(level) * threads;
-            if (method.equals(Method.LZMA2))
+            if (method.equals(Method.LZMA2.name()))
                 memory = 11 * cmdline.getDictionarySize(level) * threads;
+            dememory = cmdline.getDictionarySize(level) + 2;
         }
         memField.setHorizontalAlignment(4);
         memField.setText(String.valueOf(memory) + " MB");
+        dememField.setHorizontalAlignment(4);
+        dememField.setText(String.valueOf(dememory) + " MB");
     }
 
-    private void setDememField(String format, Level level) {
-        int memory = 0;
-        if (format.equals(Format.zip.name()))
-            memory = 2;
-        if (format.equals(z7name.toString()))
-            memory = cmdline.getDictionarySize(level) + 2;
+    private void setTarFields() {
+        memField.setHorizontalAlignment(4);
+        memField.setText(1 + " MB");
         dememField.setHorizontalAlignment(4);
-        dememField.setText(String.valueOf(memory) + " MB");
+        dememField.setText(1 + " MB");
     }
 
     void construct() {
@@ -213,6 +215,6 @@ public class Win {
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }
 }

@@ -2,6 +2,7 @@ package CmdLine;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.Objects;
 
 public class Win {
@@ -30,8 +31,11 @@ public class Win {
     private JTextField optionsField;
     private JButton checkButton;
     private JTextField maxThreadsField;
+    private JCheckBox storeSymlinksCheckBox;
+    private JCheckBox storeHardlinksCheckBox;
     private final Cmdline cmdline = new Cmdline();
     private StringBuilder z7name = new StringBuilder();
+
 
     Win() {
 
@@ -56,19 +60,15 @@ public class Win {
         setVolumeBox();
         setPathModeBox();
         setEncryptBox();
+        setUpdateModeBox();
 //        setMemoryFields(z7name.toString(), Level.normal.name(), Method.LZMA2.name(), cmdline.getThreadNum());
 
-        setUpdateModeBox();
-//        pathModeBox.addItem("Relative pathnames");
-//        encryptBox.addItem("AES-256");
 
         formatBox.addActionListener(actionEvent -> {
             if (Objects.equals(formatBox.getSelectedItem(), z7name.toString())
-                    || (Objects.equals(formatBox.getSelectedItem(), Format.zip.name()))) {
+                    || (Objects.equals(formatBox.getSelectedItem(), Format.zip.name())))
                 formatBoxInit(Objects.requireNonNull(formatBox.getSelectedItem()).toString(),
                         Level.normal.name(), cmdline.getThreadNum());
-                setEncryptBox();
-            }
 
             if (Objects.equals(formatBox.getSelectedItem(), Format.tar.name())) {
                 levelBox.removeAllItems();
@@ -79,6 +79,11 @@ public class Win {
                 threadsBox.setEnabled(false);
                 encryptBox.removeAllItems();
                 encryptBox.setEnabled(false);
+                volumeBox.setEnabled(false);
+                encryptCheckBox.setEnabled(false);
+                passwordField.setEnabled(false);
+                passwordField.setEditable(false);
+                SFXArchiveCheckBox.setEnabled(false);
 //                setTarFields();
             }
         });
@@ -116,12 +121,12 @@ public class Win {
             }
         });
 
-
         chooseButton.addActionListener(actionEvent -> {
             FileDialog fileDialog = new FileDialog(frame, "Choose file", FileDialog.LOAD);
             fileDialog.setFile("*.*");
             fileDialog.setVisible(true);
-            String fileName = fileDialog.getDirectory() + fileDialog.getFile();
+            String fileName = fileDialog.getFile();
+//            String fileName = fileDialog.getDirectory() + fileDialog.getFile();
             cmdline.setName(fileName);
             if (!fileName.equals("nullnull"))
                 fileTextField.setText(fileName);
@@ -129,35 +134,114 @@ public class Win {
                 fileTextField.setText("");
         });
 
-
+        checkButton.addActionListener(actionEvent -> {
+            cmdlineField.removeAll();
+            cmdlineField.setText(buildCommand());
+        });
 
         OKButton.addActionListener(actionEvent -> {
-//            String fileName = cmdline.getName();
+            Process proc;
+            fileTextField.setText("");
+            cmdlineField.setText("");
+            try {
+                proc = Runtime.getRuntime().exec(buildCommand());
+                proc.waitFor();
+                proc.destroy();
+            } catch (InterruptedException | IOException e) { }
         });
 
         cancelButton.addActionListener(actionEvent -> {
             frame.setVisible(false);
             frame.dispose();
         });
+
+        encryptCheckBox.addItemListener(e -> cmdline.encrypt = encryptCheckBox.isSelected());
+        SFXArchiveCheckBox.addItemListener(e -> cmdline.sfx = SFXArchiveCheckBox.isSelected());
+        compressSharedFilesCheckBox.addItemListener(e -> cmdline.shared = compressSharedFilesCheckBox.isSelected());
+        deleteAfterCompressionCheckBox.addItemListener(e -> cmdline.delete = deleteAfterCompressionCheckBox.isSelected());
+    }
+
+    //  7z a -t[7z,zip,tar] -m0=[Deflate,LZMA2,LZMA] -mx=[3,5,7] -mmt=threads [-ssw] -v{size}[b,k,m,g]
+    private String buildCommand() {
+        StringBuilder command = new StringBuilder();
+        command.append("7z").append(" ");
+        if (updateModeBox.getSelectedItem().toString().toCharArray()[0] == 'A')
+            command.append("a").append(" ");
+        else
+            if (updateModeBox.getSelectedItem().toString().toCharArray()[0] == 'U')
+                command.append("u").append(" ");
+
+        command.append("-t");
+        if (formatBox.getSelectedItem().toString().equals(z7name.toString()))
+            command.append(z7name.toString()).append(" ");
+        else
+            command.append(formatBox.getSelectedItem().toString()).append(" ");
+
+        if (!formatBox.getSelectedItem().toString().equals(Format.tar.name())) {
+            command.append("-mx=");
+            if (levelBox.getSelectedItem().toString().equals(Level.fast.name()))
+                command.append("3").append(" ");
+            if (levelBox.getSelectedItem().toString().equals(Level.normal.name()))
+                command.append("5").append(" ");
+            if (levelBox.getSelectedItem().toString().equals(Level.maximum.name()))
+                command.append("7").append(" ");
+        }
+
+        if (formatBox.getSelectedItem().toString().equals(z7name.toString()))
+            command.append("-m0=").append(methodBox.getSelectedItem().toString()).append(" ");
+        if (formatBox.getSelectedItem().toString().equals(Format.zip.name()))
+            command.append("-mm=").append(methodBox.getSelectedItem().toString()).append(" ");
+        if (!formatBox.getSelectedItem().toString().equals(Format.tar.name()))
+            command.append("-mmt=").append(threadsBox.getSelectedItem().toString()).append(" ");
+
+//        sfx
+        if (compressSharedFilesCheckBox.isSelected() && formatBox.getSelectedItem().toString().equals(z7name.toString()))
+            command.append("-ssw").append(" ");
+        if (!volumeBox.getSelectedItem().toString().equals(""))
+            command.append("-v").append(volumeBox.getSelectedItem().toString().split(" ")[0].toLowerCase()).append(" ");
+
+        if (!cmdline.getName().isEmpty()) {
+            if (formatBox.getSelectedItem().toString().equals(z7name.toString()))
+                command.append(cmdline.getName().split("\\.")[0])
+                        .append(".").append(z7name.toString()).append(" ");
+            else
+                command.append(cmdline.getName().split("\\.")[0])
+                        .append(".").append(formatBox.getSelectedItem().toString()).append(" ");
+        }
+        else {
+            command.delete(0, command.length() - 1);
+            command.append("Choose file or directory");
+        }
+
+        command.append(cmdline.getName());
+
+        return command.toString();
     }
 
     private void formatBoxInit(String format, String level, int threads) {
         methodBox.setEnabled(true);
         methodBox.removeAllItems();
+        volumeBox.setEnabled(true);
         if (format.equals(z7name.toString())) {
+            passwordField.setEnabled(true);
+            passwordField.setEditable(true);
+            encryptCheckBox.setEnabled(true);
+            SFXArchiveCheckBox.setEnabled(true);
             methodBox.addItem(Method.LZMA2.name());
 //            setMemoryFields(format, level, Method.LZMA2.name(), threads);
         }
         if (format.equals(Format.zip.name())) {
+            passwordField.setEnabled(true);
+            passwordField.setEditable(true);
+            encryptCheckBox.setEnabled(false);
+            SFXArchiveCheckBox.setEnabled(false);
             methodBox.addItem(Method.Deflate.name());
 //            setMemoryFields(format, level, Method.Deflate.name(), threads);
         }
         methodBox.addItem(Method.LZMA.name());
-//        if (methodBox.getItemCount() > 2)
-//            while (methodBox.getItemCount() != 2)
-//                methodBox.remove(2);
         setLevelBox();
         setThreadsBox(true);
+        setEncryptBox();
     }
 
     private void setLevelBox() {
@@ -167,9 +251,6 @@ public class Win {
         levelBox.addItem(Level.normal.name());
         levelBox.addItem(Level.maximum.name());
         levelBox.setSelectedItem(Level.normal.name());
-//        if (levelBox.getItemCount() > 3)
-//            while (levelBox.getItemCount() != 3)
-//                levelBox.remove(3);
     }
 
     // true: threads = cpu cores, false: threads = 2 for lzma
@@ -185,9 +266,6 @@ public class Win {
             threadsBox.addItem("2");
             threadsBox.setSelectedIndex(cmdline.getThreadNumKey(2));
         }
-//        if (threadsBox.getItemCount() > 8)
-//            while (threadsBox.getItemCount() != 8)
-//                threadsBox.remove(8);
     }
 
     private void setMemoryFields(String format, String level, String method, int threads) {
@@ -221,13 +299,9 @@ public class Win {
         volumeBox.setEnabled(true);
         volumeBox.removeAllItems();
         volumeBox.addItem("");
-        volumeBox.addItem("100M");
-        volumeBox.addItem("650M - CD");
+        volumeBox.addItem("210M - mCD");
         volumeBox.addItem("700M - CD");
-        volumeBox.addItem("1000M");
-        volumeBox.addItem("1300M - 2CD");
-        volumeBox.addItem("1400M - 2CD");
-        volumeBox.addItem("2000M");
+        volumeBox.addItem("1420M - mDVD");
         volumeBox.addItem("4092M - FAT32");
         volumeBox.addItem("4480M - DVD");
         volumeBox.addItem("8128M - DVD/DL");
@@ -248,7 +322,7 @@ public class Win {
         updateModeBox.removeAllItems();
         updateModeBox.addItem("Add & replace files");
         updateModeBox.addItem("Update & add files");
-        updateModeBox.addItem("Update files");
+        updateModeBox.addItem("Freshen existing files");
         updateModeBox.addItem("Synchronize files");
     }
 
@@ -258,10 +332,9 @@ public class Win {
         if (Objects.requireNonNull(formatBox.getSelectedItem()).toString().equals(z7name.toString()))
             encryptBox.addItem("AES-256");
         if (formatBox.getSelectedItem().toString().equals(Format.zip.name())) {
-            encryptBox.addItem("AES-256");
             encryptBox.addItem("ZipCrypto");
+            encryptBox.addItem("AES-256");
         }
-
     }
     void construct() {
             frame.setContentPane(panel);

@@ -9,7 +9,7 @@ public class Win {
     private JPanel panel;
     private JTextField fileTextField;
     private JButton chooseButton;
-    private JComboBox volumeBox;
+    private JComboBox<String> volumeBox;
     private JComboBox<String> updateModeBox;
     private JComboBox<String> pathModeBox;
     private JTextField passwordField;
@@ -53,17 +53,22 @@ public class Win {
 
         setLevelBox();
         setThreadsBox(true);
+        setVolumeBox();
+        setPathModeBox();
+        setEncryptBox();
 //        setMemoryFields(z7name.toString(), Level.normal.name(), Method.LZMA2.name(), cmdline.getThreadNum());
 
-        updateModeBox.addItem("Add & replace files");
-        pathModeBox.addItem("Relative pathnames");
-        encryptBox.addItem("AES-256");
+        setUpdateModeBox();
+//        pathModeBox.addItem("Relative pathnames");
+//        encryptBox.addItem("AES-256");
 
         formatBox.addActionListener(actionEvent -> {
             if (Objects.equals(formatBox.getSelectedItem(), z7name.toString())
-                    || (Objects.equals(formatBox.getSelectedItem(), Format.zip.name())))
+                    || (Objects.equals(formatBox.getSelectedItem(), Format.zip.name()))) {
                 formatBoxInit(Objects.requireNonNull(formatBox.getSelectedItem()).toString(),
                         Level.normal.name(), cmdline.getThreadNum());
+                setEncryptBox();
+            }
 
             if (Objects.equals(formatBox.getSelectedItem(), Format.tar.name())) {
                 levelBox.removeAllItems();
@@ -72,6 +77,8 @@ public class Win {
                 methodBox.setEnabled(false);
                 threadsBox.removeAllItems();
                 threadsBox.setEnabled(false);
+                encryptBox.removeAllItems();
+                encryptBox.setEnabled(false);
 //                setTarFields();
             }
         });
@@ -210,6 +217,52 @@ public class Win {
         dememField.setText(1 + " MB");
     }
 
+    private void setVolumeBox() {
+        volumeBox.setEnabled(true);
+        volumeBox.removeAllItems();
+        volumeBox.addItem("");
+        volumeBox.addItem("100M");
+        volumeBox.addItem("650M - CD");
+        volumeBox.addItem("700M - CD");
+        volumeBox.addItem("1000M");
+        volumeBox.addItem("1300M - 2CD");
+        volumeBox.addItem("1400M - 2CD");
+        volumeBox.addItem("2000M");
+        volumeBox.addItem("4092M - FAT32");
+        volumeBox.addItem("4480M - DVD");
+        volumeBox.addItem("8128M - DVD/DL");
+        volumeBox.addItem("23040M - BD");
+        volumeBox.setSelectedItem("");
+    }
+
+    private void setPathModeBox() {
+        pathModeBox.setEnabled(true);
+        pathModeBox.removeAllItems();
+        pathModeBox.addItem("Relative pathnames");
+        pathModeBox.addItem("Full pathnames");
+        pathModeBox.addItem("Absolute pathnames");
+    }
+
+    private void setUpdateModeBox() {
+        updateModeBox.setEnabled(true);
+        updateModeBox.removeAllItems();
+        updateModeBox.addItem("Add & replace files");
+        updateModeBox.addItem("Update & add files");
+        updateModeBox.addItem("Update files");
+        updateModeBox.addItem("Synchronize files");
+    }
+
+    private void setEncryptBox() {
+        encryptBox.setEnabled(true);
+        encryptBox.removeAllItems();
+        if (Objects.requireNonNull(formatBox.getSelectedItem()).toString().equals(z7name.toString()))
+            encryptBox.addItem("AES-256");
+        if (formatBox.getSelectedItem().toString().equals(Format.zip.name())) {
+            encryptBox.addItem("AES-256");
+            encryptBox.addItem("ZipCrypto");
+        }
+
+    }
     void construct() {
             frame.setContentPane(panel);
             frame.pack();

@@ -6,12 +6,28 @@ public class Cmdline {
 
     private String name = "";
     private int threadNum;
-    public int volumeSize;
-    public boolean sfx;
-    public boolean shared;
-    public boolean delete;
-    public String password;
-    public boolean encrypt;
+    private String volumeSize;
+    boolean sfx;
+    boolean shared;
+    boolean delete;
+    private String password;
+    boolean encrypt;
+
+    String getVolumeSize() {
+        return volumeSize;
+    }
+
+    void setVolumeSize(String volumeSize) {
+        this.volumeSize = volumeSize;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     String getName() {
         return name;

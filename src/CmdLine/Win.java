@@ -121,17 +121,27 @@ public class Win {
             }
         });
 
+        volumeBox.addActionListener(actionEvent -> {
+            String vol;
+            if (!Objects.equals(volumeBox.getSelectedItem(), "")) {
+                vol = Objects.requireNonNull(volumeBox.getSelectedItem()).toString().split(" ")[0];
+                cmdline.setVolumeSize(vol.toLowerCase());
+            }
+        });
+
         chooseButton.addActionListener(actionEvent -> {
+            String fileName;
             FileDialog fileDialog = new FileDialog(frame, "Choose file", FileDialog.LOAD);
             fileDialog.setFile("*.*");
             fileDialog.setVisible(true);
-            String fileName = fileDialog.getFile();
-//            String fileName = fileDialog.getDirectory() + fileDialog.getFile();
+            fileName = fileDialog.getFile();
             cmdline.setName(fileName);
+            try {
             if (!fileName.equals("nullnull"))
                 fileTextField.setText(fileName);
             else
-                fileTextField.setText("");
+                fileTextField.setText(""); }
+                catch (NullPointerException e) { }
         });
 
         checkButton.addActionListener(actionEvent -> {
@@ -143,8 +153,18 @@ public class Win {
             Process proc;
             fileTextField.setText("");
             cmdlineField.setText("");
+/*
+            if (cmdline.delete) {
+                try {
+                    Process del = Runtime.getRuntime().exec("del " + cmdline.getName());
+                    del.waitFor();
+                    del.destroy();
+                } catch (InterruptedException | IOException e) { }
+            }
+*/
             try {
                 proc = Runtime.getRuntime().exec(buildCommand());
+                cmdline.setName("");
                 proc.waitFor();
                 proc.destroy();
             } catch (InterruptedException | IOException e) { }
@@ -197,8 +217,12 @@ public class Win {
 //        sfx
         if (compressSharedFilesCheckBox.isSelected() && formatBox.getSelectedItem().toString().equals(z7name.toString()))
             command.append("-ssw").append(" ");
-        if (!volumeBox.getSelectedItem().toString().equals(""))
-            command.append("-v").append(volumeBox.getSelectedItem().toString().split(" ")[0].toLowerCase()).append(" ");
+        if (!Objects.requireNonNull(volumeBox.getSelectedItem()).toString().equals("")) {
+            command.append("-v").append(cmdline.getVolumeSize().toLowerCase()).append(" ");
+        }
+
+        if (!optionsField.getText().isEmpty())
+            command.append(optionsField.getText()).append(" ");
 
         if (!cmdline.getName().isEmpty()) {
             if (formatBox.getSelectedItem().toString().equals(z7name.toString()))

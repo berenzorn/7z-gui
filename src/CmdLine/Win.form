@@ -128,6 +128,7 @@
               </grid>
             </constraints>
             <properties>
+              <enabled value="false"/>
               <text value="Delete after compression"/>
             </properties>
           </component>
